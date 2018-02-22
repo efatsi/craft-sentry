@@ -1,6 +1,8 @@
 <?php
 namespace Craft;
 
+use Raven_Client;
+
 class SentryService extends BaseApplicationComponent
 {
     /**
@@ -26,6 +28,23 @@ class SentryService extends BaseApplicationComponent
     {
         $this->plugin = craft()->plugins->getPlugin('sentry');
         $this->settings = $this->plugin->getSettings();
+    }
+
+    public function captureException(\Exception $e, $data=array()) {
+        echo("Catching exception!");
+        $this->ravenClient()->captureException($e, $data);
+    }
+
+    public function captureError($message, $params=array(), $data=array(), $stack=false, $vars = null) {
+        echo("Catching error!");
+        $this->ravenClient()->captureMessage($message, $params, $level, $stack, $vars);
+    }
+
+    public function ravenClient() {
+        $client = new Raven_Client(craft()->sentry->dsn());
+        $client->tags_context(array('environment' => CRAFT_ENVIRONMENT));
+
+        return $client;
     }
 
     /**
@@ -62,7 +81,7 @@ class SentryService extends BaseApplicationComponent
         }
         return $this->settings->getAttribute('publicDsn');
     }
-    
+
     /**
      * True if the Sentry public DSN is specified by the environment (.env or whatever)
      * @return boolean
@@ -73,3 +92,4 @@ class SentryService extends BaseApplicationComponent
     }
 
 }
+
